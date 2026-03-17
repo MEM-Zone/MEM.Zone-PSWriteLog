@@ -308,9 +308,9 @@ Describe 'Write-LogBuffer' {
         Write-LogBuffer
         # Second flush should not write anything new
         $LogFile = Join-Path -Path $TestLogPath -ChildPath 'BufferTest.log'
-        $LinesBefore = (Get-Content -Path $LogFile).Count
+        $LinesBefore = @(Get-Content -Path $LogFile).Count
         Write-LogBuffer
-        $LinesAfter = (Get-Content -Path $LogFile).Count
+        $LinesAfter = @(Get-Content -Path $LogFile).Count
         $LinesAfter | Should -Be $LinesBefore
     }
 
