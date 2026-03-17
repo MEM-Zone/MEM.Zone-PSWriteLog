@@ -1,7 +1,7 @@
 #Requires -Module Pester
 
 BeforeAll {
-    $ModulePath = Join-Path -Path $PSScriptRoot -ChildPath '../../src/PSWriteLog/PSWriteLog.psd1'
+    $ModulePath = Join-Path -Path $PSScriptRoot -ChildPath '../src/PSWriteLog/PSWriteLog.psd1'
     Import-Module -Name $ModulePath -Force -ErrorAction Stop
 }
 
@@ -14,7 +14,7 @@ Describe 'Module: PSWriteLog' {
     Context 'Module Import' {
 
         It 'Should import without errors' {
-            { Import-Module -Name (Join-Path $PSScriptRoot '../../src/PSWriteLog/PSWriteLog.psd1') -Force } | Should -Not -Throw
+            { Import-Module -Name (Join-Path $PSScriptRoot '../src/PSWriteLog/PSWriteLog.psd1') -Force } | Should -Not -Throw
         }
 
         It 'Should be loaded' {
