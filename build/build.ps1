@@ -116,44 +116,55 @@ if ('Build' -in $Task) {
 
     ## Preserve module header and state from the source .psm1
     $SourcePsm1 = Get-Content -Path (Join-Path -Path $ModuleSourcePath -ChildPath "$ModuleName.psm1") -Raw
-    $HeaderMatch = [regex]::Match($SourcePsm1, '(?s)\A.*?#endregion Module State')
+    $SectionDivider = "##*============================================="
+    $HeaderMatch = [regex]::Match($SourcePsm1, '(?s)\A.*?##\*\s*END MODULE STATE\s*\r?\n##\*=+')
     if ($HeaderMatch.Success) {
         [void]$CompiledContent.AppendLine($HeaderMatch.Value)
         [void]$CompiledContent.AppendLine()
     }
 
-    ## Preserve module cleanup handler from the source .psm1
-    $CleanupMatch = [regex]::Match($SourcePsm1, '(?s)#region Module Cleanup.*?#endregion Module Cleanup')
-    if ($CleanupMatch.Success) {
-        [void]$CompiledContent.AppendLine($CleanupMatch.Value)
-        [void]$CompiledContent.AppendLine()
-    }
+    ## Append Function Listings section
+    [void]$CompiledContent.AppendLine($SectionDivider)
+    [void]$CompiledContent.AppendLine('##* FUNCTION LISTINGS')
+    [void]$CompiledContent.AppendLine($SectionDivider)
+    [void]$CompiledContent.AppendLine('#region FunctionListings')
+    [void]$CompiledContent.AppendLine()
 
     ## Append Private functions
     $PrivateFiles = Get-ChildItem -Path "$ModuleSourcePath/Private/*.ps1" -ErrorAction SilentlyContinue
     if ($PrivateFiles) {
-        [void]$CompiledContent.AppendLine('#region Private Functions')
-        [void]$CompiledContent.AppendLine()
         foreach ($File in $PrivateFiles) {
-            [void]$CompiledContent.AppendLine("# --- $($File.Name) ---")
+            [string]$FunctionName = $File.BaseName
+            [void]$CompiledContent.AppendLine("#region function $FunctionName")
             [void]$CompiledContent.AppendLine((Get-Content -Path $File.FullName -Raw))
+            [void]$CompiledContent.AppendLine("#endregion function $FunctionName")
             [void]$CompiledContent.AppendLine()
         }
-        [void]$CompiledContent.AppendLine('#endregion Private Functions')
-        [void]$CompiledContent.AppendLine()
     }
 
     ## Append Public functions
     $PublicFiles = Get-ChildItem -Path "$ModuleSourcePath/Public/*.ps1" -ErrorAction SilentlyContinue
     if ($PublicFiles) {
-        [void]$CompiledContent.AppendLine('#region Public Functions')
-        [void]$CompiledContent.AppendLine()
         foreach ($File in $PublicFiles) {
-            [void]$CompiledContent.AppendLine("# --- $($File.Name) ---")
+            [string]$FunctionName = $File.BaseName
+            [void]$CompiledContent.AppendLine("#region function $FunctionName")
             [void]$CompiledContent.AppendLine((Get-Content -Path $File.FullName -Raw))
+            [void]$CompiledContent.AppendLine("#endregion function $FunctionName")
             [void]$CompiledContent.AppendLine()
         }
-        [void]$CompiledContent.AppendLine('#endregion Public Functions')
+    }
+
+    [void]$CompiledContent.AppendLine('#endregion FunctionListings')
+    [void]$CompiledContent.AppendLine($SectionDivider)
+    [void]$CompiledContent.AppendLine('##* END FUNCTION LISTINGS')
+    [void]$CompiledContent.AppendLine($SectionDivider)
+    [void]$CompiledContent.AppendLine()
+
+    ## Preserve module cleanup handler from the source .psm1
+    $CleanupMatch = [regex]::Match($SourcePsm1, '(?s)##\*=+\r?\n##\* MODULE CLEANUP.*?##\*\s*END MODULE CLEANUP\s*\r?\n##\*=+')
+    if ($CleanupMatch.Success) {
+        [void]$CompiledContent.AppendLine($CleanupMatch.Value)
+        [void]$CompiledContent.AppendLine()
     }
 
     Set-Content -Path (Join-Path -Path $OutputPath -ChildPath "$ModuleName.psm1") -Value $CompiledContent.ToString() -Encoding UTF8 -Force
