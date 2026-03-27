@@ -10,6 +10,9 @@
     - Test    : Run Pester unit and integration tests.
     - Build   : Compile module into a single-file .psm1 in the output directory.
     - Publish : Publish the module to the PowerShell Gallery (requires -NuGetApiKey).
+.PARAMETER VersionBump
+    Bump the module version before building. Accepted values: Major, Minor, Patch.
+    Default: Patch. Updates the ModuleVersion in the source .psd1 manifest.
 .PARAMETER NuGetApiKey
     API key for publishing to the PowerShell Gallery. Required for the Publish task.
     Store securely and never commit to source control.
@@ -18,6 +21,9 @@
 .EXAMPLE
     ./build.ps1
     Runs Analyze and Test tasks with default settings.
+.EXAMPLE
+    ./build.ps1 -Task Build -VersionBump Minor
+    Bumps the minor version and compiles the module.
 .EXAMPLE
     ./build.ps1 -Task Build
     Compiles the module into a single-file build.
@@ -29,6 +35,9 @@
 param (
     [ValidateSet('Analyze', 'Test', 'Build', 'Publish')]
     [string[]]$Task = @('Analyze', 'Test'),
+
+    [ValidateSet('Major', 'Minor', 'Patch')]
+    [string]$VersionBump = 'Patch',
 
     [string]$NuGetApiKey,
 
@@ -108,8 +117,23 @@ if ('Build' -in $Task) {
     }
     $null = New-Item -Path $OutputPath -ItemType Directory -Force
 
+    ## Bump version in the source manifest if requested
+    [string]$ManifestPath = Join-Path -Path $ModuleSourcePath -ChildPath "$ModuleName.psd1"
+    if ($VersionBump) {
+        $ManifestData   = Import-PowerShellDataFile -Path $ManifestPath
+        [version]$OldVersion = $ManifestData.ModuleVersion
+        [version]$NewVersion = switch ($VersionBump) {
+            'Major' { [version]::new($OldVersion.Major + 1, 0, 0) }
+            'Minor' { [version]::new($OldVersion.Major, $OldVersion.Minor + 1, 0) }
+            'Patch' { [version]::new($OldVersion.Major, $OldVersion.Minor, $OldVersion.Build + 1) }
+        }
+        (Get-Content -Path $ManifestPath -Raw) -replace "ModuleVersion\s*=\s*'$OldVersion'", "ModuleVersion     = '$NewVersion'" |
+            Set-Content -Path $ManifestPath -Encoding UTF8 -NoNewline
+        Write-Host "  Version bump: $OldVersion -> $NewVersion" -ForegroundColor Yellow
+    }
+
     ## Read the manifest to get version info
-    $ManifestData = Import-PowerShellDataFile -Path (Join-Path -Path $ModuleSourcePath -ChildPath "$ModuleName.psd1")
+    $ManifestData = Import-PowerShellDataFile -Path $ManifestPath
     Write-Host "  Building $ModuleName v$($ManifestData.ModuleVersion)" -ForegroundColor Yellow
 
     ## Compile all function files into a single .psm1 for distribution performance
@@ -120,7 +144,10 @@ if ('Build' -in $Task) {
     $SectionDivider = "##*============================================="
     $HeaderMatch = [regex]::Match($SourcePsm1, '(?s)\A.*?##\*\s*END MODULE STATE\s*\r?\n##\*=+')
     if ($HeaderMatch.Success) {
-        [void]$CompiledContent.AppendLine($HeaderMatch.Value)
+        ## Update Module Version and Last Modified in the header
+        [string]$HeaderContent = $HeaderMatch.Value -replace '(?<=Module Version:\s*)[\d.]+', $ManifestData.ModuleVersion
+        $HeaderContent = $HeaderContent -replace '(?<=Last Modified:\s*)[\d-]+', (Get-Date -Format 'yyyy-MM-dd')
+        [void]$CompiledContent.AppendLine($HeaderContent)
         [void]$CompiledContent.AppendLine()
     }
 

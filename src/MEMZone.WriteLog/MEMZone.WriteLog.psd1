@@ -3,7 +3,7 @@
     RootModule        = 'MEMZone.WriteLog.psm1'
 
     # Version number of this module (SemVer)
-    ModuleVersion     = '2.0.0'
+    ModuleVersion     = '2.0.8'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
