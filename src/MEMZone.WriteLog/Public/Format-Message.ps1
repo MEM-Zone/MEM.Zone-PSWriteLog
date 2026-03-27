@@ -242,6 +242,13 @@ function Format-Message {
                                 #  Format the value
                                 $FormattedValue = if ($null -eq $Value) { '' } else { $Value.ToString() }
                             }
+                            #  Center single-character values (e.g. status indicators) within the column
+                            [int]$ColWidth = $ColumnWidths[$Counter]
+                            if ($FormattedValue.Length -eq 1 -and $ColWidth -gt 1) {
+                                [int]$LeftPad  = [Math]::Floor(($ColWidth - $FormattedValue.Length) / 2)
+                                [int]$RightPad = $ColWidth - $FormattedValue.Length - $LeftPad
+                                $FormattedValue = (' ' * $LeftPad) + $FormattedValue + (' ' * $RightPad)
+                            }
                             #  Add padding if requested
                             if ($CellPadding -gt 0) { $RowData += (' ' * $CellPadding) + $FormattedValue + (' ' * $CellPadding) }
                             else { $RowData += $FormattedValue }

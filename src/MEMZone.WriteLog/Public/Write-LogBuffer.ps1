@@ -37,7 +37,7 @@ function Write-LogBuffer {
                 [string[]]$LogEntries = $Script:LogBuffer.ToArray()
 
                 ## Append to log file
-                if ($null -ne $Script:LogFullName -and (Test-Path -Path (Split-Path -Path $Script:LogFullName -Parent) -PathType Container)) {
+                if (-not [string]::IsNullOrEmpty($Script:LogFullName) -and (Test-Path -Path (Split-Path -Path $Script:LogFullName -Parent) -PathType Container)) {
                     Add-Content -Path $Script:LogFullName -Value $LogEntries -Encoding UTF8 -ErrorAction Stop
                 }
 
