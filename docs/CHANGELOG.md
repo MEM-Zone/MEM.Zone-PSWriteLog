@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `[BREAKING]` Renamed module from `PSWriteLog` to `MEMZone.WriteLog`.
 - `[BREAKING]` Renamed `Initialize-PSWriteLog` to `Initialize-WriteLog`.
-- Build script auto-increments patch version by default; use `-VersionBump Minor` or `-VersionBump Major` to override.
+- Build script supports `-VersionBump Patch|Minor|Major` to update the manifest version before building.
 
 ### Added
 

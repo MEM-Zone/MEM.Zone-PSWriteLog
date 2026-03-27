@@ -12,7 +12,7 @@
     - Publish : Publish the module to the PowerShell Gallery (requires -NuGetApiKey).
 .PARAMETER VersionBump
     Bump the module version before building. Accepted values: Major, Minor, Patch.
-    Default: Patch. Updates the ModuleVersion in the source .psd1 manifest.
+    Updates the ModuleVersion in the source .psd1 manifest. Omit to skip version bump.
 .PARAMETER NuGetApiKey
     API key for publishing to the PowerShell Gallery. Required for the Publish task.
     Store securely and never commit to source control.
@@ -37,7 +37,7 @@ param (
     [string[]]$Task = @('Analyze', 'Test'),
 
     [ValidateSet('Major', 'Minor', 'Patch')]
-    [string]$VersionBump = 'Patch',
+    [string]$VersionBump,
 
     [string]$NuGetApiKey,
 
